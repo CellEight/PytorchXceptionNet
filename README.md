@@ -14,7 +14,7 @@ If you really want to train with all of ImageNet you can find a few different me
 
 ## Pretrained Weights
 
-If you lack a graphics card on which to train the model or you just don't want to go through the hassle of training it yourself I have uploaded a `.pkl` file containing a serialized version of the model trained on the included dataset which you can find it [here]()
+If you lack a graphics card on which to train the model or you just don't want to go through the hassle of training it yourself I have uploaded a `.pkl` file containing a serialized version of the model trained on the included dataset which you can find it [here](https://drive.google.com/file/d/1LPGK0oj8_bAWB09DTlL58kl5WVzpFO8q/view?usp=sharing)
 
 ## Requirements
 
