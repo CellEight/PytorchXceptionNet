@@ -7,7 +7,7 @@ from torchvision import datasets
 from torchvision import transforms
 import numpy as np
 import pickle
-from models.MobileNet import MobileNet 
+from models.XceptionNet import XceptionNet 
 
 # Select device to train on
 device = torch.device("cuda")
@@ -46,15 +46,15 @@ if __name__ == "__main__":
     # Load training data
     dataset = datasets.ImageFolder('./data', transform=transform) 
     test_data, train_data = random_split(dataset,(4396,1099), generator=torch.Generator().manual_seed(42))
-    train_dl = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True, num_workers=4)
-    test_dl = torch.utils.data.DataLoader(test_data, batch_size=64, shuffle=True, num_workers=4)
+    train_dl = torch.utils.data.DataLoader(train_data, batch_size=16, shuffle=True, num_workers=4)
+    test_dl = torch.utils.data.DataLoader(test_data, batch_size=16, shuffle=True, num_workers=4)
     # Train Models
-    epochs = 50 
-    model = MobileNet(11).to(device)
+    epochs = 25 
+    model = XceptionNet(11).to(device)
     loss_func = nn.CrossEntropyLoss()
     opt = optim.Adam(model.parameters(), lr=0.0001)
     train_loss, test_loss = train(model, train_dl, test_dl, opt, loss_func, epochs)
     # Save Model to pkl file
-    f = open(f'resnet18.pkl','wb')
+    f = open(f'xceptionnet.pkl','wb')
     pickle.dump(model,f)
     f.close()

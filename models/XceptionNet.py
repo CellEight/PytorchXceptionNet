@@ -9,9 +9,9 @@ class XceptionNet(nn.Module):
         super().__init__()
         # Entry Flow
         self.conv1 = nn.Conv2d(3,32,kernel_size=3,stride=2,padding=1,padding_mode='reflect')
-        self.b1 = nn.BatchNorm2d(32)
-        self.conv1 = nn.Conv2d(32,64,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
-        self.b5 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32,64,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.bn2 = nn.BatchNorm2d(64)
         self.convblk1 = ConvResBlock(64,128,relu=False)
         self.convblk2 = ConvResBlock(128,256)
         self.convblk3 = ConvResBlock(256,728)
@@ -26,12 +26,12 @@ class XceptionNet(nn.Module):
         self.idenblk8 = IndentiyResBlock(728,728)
         # Exit Flow
         self.convblk4 = ConvResBlock(728,1024,chan_mid=728)
-        self.sep1 = SepConv2d(1024,1536,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep1 = SepConv2d(1024,1536)
         self.bn3 = nn.BatchNorm2d(1536)
-        self.sep2 = SepConv2d(1536,2048,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep2 = SepConv2d(1536,2048)
         self.bn4 = nn.BatchNorm2d(2048)
-        self.avgpool = self.AvgPool2d(9)
-        self.fc = nn.Linear(2048,n_classes)
+        self.avgpool = nn.AvgPool2d(9)
+        self.fc1 = nn.Linear(2048,n_classes)
 
     def forward(self, x):
         # Entry Flow
@@ -55,22 +55,23 @@ class XceptionNet(nn.Module):
         x = F.relu(self.bn4(self.sep2(x)))
         x = self.avgpool(x)
         x = x.view(-1,2048)
-        x = F.relu(x.fc(x))
+        x = F.relu(self.fc1(x))
         return x
 
 class ConvResBlock(nn.Module):
     """ Realizes the repeated convolutional units with convolutional residual connections 
         that are present in the entry flow of the Xception Net architecture """
-    def __init__(self, chan_in, chan_out, chan_mid = None relu=True):
+    def __init__(self, chan_in, chan_out, chan_mid = None, relu=True):
         super().__init__()
+        self.relu = relu
         if not chan_mid:
             chan_mid = chan_out
         self.res1 = nn.Conv2d(chan_in,chan_out,kernel_size=1,stride=2)
-        self.sep1 = SepConv2d(chan_in,chan_mid,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep1 = SepConv2d(chan_in,chan_mid)
         self.bn1 = nn.BatchNorm2d(chan_mid)
-        self.sep2 = SepConv2d(chan_mid,chan_out,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep2 = SepConv2d(chan_mid,chan_out)
         self.bn2 = nn.BatchNorm2d(chan_out)
-        self.max_pool = nn.MaxPool2d(kernel_size=3,stride=2)
+        self.max_pool = nn.MaxPool2d(kernel_size=3,stride=2,padding=1)
 
     def forward(self, x):
         x0 = self.res1(x)
@@ -85,11 +86,11 @@ class IndentiyResBlock(nn.Module):
         that are present in the middle flow of the Xception Net architecture. """
     def __init__(self, chan_in, chan_out):
         super().__init__()
-        self.sep1 = SepConv2d(chan_in,chan_out,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep1 = SepConv2d(chan_in,chan_out)
         self.bn1 = nn.BatchNorm2d(chan_out)
-        self.sep2 = SepConv2d(chan_out,chan_out,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep2 = SepConv2d(chan_out,chan_out)
         self.bn2 = nn.BatchNorm2d(chan_out)
-        self.sep3 = SepConv2d(chan_out,chan_out,kernel_size=3,stride=1,padding=1,padding_mode='reflect')
+        self.sep3 = SepConv2d(chan_out,chan_out)
         self.bn3 = nn.BatchNorm2d(chan_out)
         
     def forward(self, x):
@@ -97,4 +98,6 @@ class IndentiyResBlock(nn.Module):
         x1 = self.bn1(self.sep1(F.relu(x))) 
         x1 = self.bn2(self.sep2(F.relu(x))) 
         x1 = self.bn3(self.sep3(F.relu(x))) 
-        return x0 + x1 
+        return x0 + x1
+
+
